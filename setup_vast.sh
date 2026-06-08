@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Log file setup
+LOG_FILE="installation_log.txt"
+echo "Installation started at $(date)" > $LOG_FILE
+
 echo "========================================"
 echo "1. REPOSITORY KLONEN & ORDNER BAUEN"
 echo "========================================"
