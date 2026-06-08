@@ -1,6 +1,10 @@
 #!/bin/bash
 # setup_tagger.sh
 
+# Log file setup
+LOG_FILE="installation_log.txt"
+echo "Installation started at $(date)" > $LOG_FILE
+
 echo "========================================="
 echo " Starting WD Tagger V3 Provisioning"
 echo "========================================="
