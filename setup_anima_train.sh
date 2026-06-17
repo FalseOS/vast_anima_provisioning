@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Best Practice: Skript bricht bei Fehlern ab, statt kaputten Zustand zu hinterlassen
+# ==========================================
+# NOTBREMSE & FEHLER-LOGGING
+# ==========================================
 set -euo pipefail
 
-# Fehler-Log-Funktion (hilft extrem beim Debuggen von Start-Problemen)
 script_error() {
     local exit_code=$?
     local line_number=$1
@@ -14,10 +15,22 @@ trap 'script_error $LINENO' ERR
 echo "========================================"
 echo "0. CONDA FÜR DIESES SKRIPT INITIALISIEREN"
 echo "========================================"
-# Fügt Conda zum Pfad hinzu (Standard-Pfad bei Vast.ai / RunPod)
-export PATH="/opt/conda/bin:$PATH"
-# Lädt die Conda-Befehle (wie 'conda activate') in diese non-interactive Shell
-eval "$(conda shell.bash hook)"
+# Suche nach der offiziellen Conda-Initialisierungsdatei (deckt alle gängigen Docker-Images ab)
+if [ -f "/opt/conda/etc/profile.d/conda.sh" ]; then
+    source "/opt/conda/etc/profile.d/conda.sh"
+elif [ -f "/root/miniconda3/etc/profile.d/conda.sh" ]; then
+    source "/root/miniconda3/etc/profile.d/conda.sh"
+elif [ -f "/usr/local/conda/etc/profile.d/conda.sh" ]; then
+    source "/usr/local/conda/etc/profile.d/conda.sh"
+elif [ -f "/opt/miniconda/etc/profile.d/conda.sh" ]; then
+    source "/opt/miniconda/etc/profile.d/conda.sh"
+elif [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
+    source "/opt/miniconda3/etc/profile.d/conda.sh"
+else
+    echo "[FEHLER] Conda konnte auf diesem Image nicht gefunden werden!"
+    exit 1
+fi
+echo "Conda erfolgreich initialisiert!"
 
 echo "========================================"
 echo "1. REPOSITORY KLONEN & ORDNER BAUEN"
@@ -37,7 +50,6 @@ echo "========================================"
 echo "2. CONDA UMGEBUNG ERSTELLEN"
 echo "========================================"
 conda create -n diffusion-pipe python=3.12 -y
-# Da wir den hook oben geladen haben, nutzen wir hier das moderne 'conda activate'
 conda activate diffusion-pipe
 
 echo "========================================"
