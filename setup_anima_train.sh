@@ -13,24 +13,22 @@ script_error() {
 trap 'script_error $LINENO' ERR
 
 echo "========================================"
-echo "0. CONDA FÜR DIESES SKRIPT INITIALISIEREN"
+echo "0. CONDA ÜBER VENV/MAIN AKTIVIEREN"
 echo "========================================"
-# Suche nach der offiziellen Conda-Initialisierungsdatei (deckt alle gängigen Docker-Images ab)
-if [ -f "/opt/conda/etc/profile.d/conda.sh" ]; then
-    source "/opt/conda/etc/profile.d/conda.sh"
-elif [ -f "/root/miniconda3/etc/profile.d/conda.sh" ]; then
-    source "/root/miniconda3/etc/profile.d/conda.sh"
-elif [ -f "/usr/local/conda/etc/profile.d/conda.sh" ]; then
-    source "/usr/local/conda/etc/profile.d/conda.sh"
-elif [ -f "/opt/miniconda/etc/profile.d/conda.sh" ]; then
-    source "/opt/miniconda/etc/profile.d/conda.sh"
-elif [ -f "/opt/miniconda3/etc/profile.d/conda.sh" ]; then
-    source "/opt/miniconda3/etc/profile.d/conda.sh"
+# 1. Das offizielle Environment aktivieren (wie im Vast-Flux-Skript)
+source /venv/main/bin/activate
+
+# 2. Conda-Befehle für die non-interactive Shell verfügbar machen
+if [ -f "/venv/etc/profile.d/conda.sh" ]; then
+    source "/venv/etc/profile.d/conda.sh"
+elif CONDA_SH=$(find /venv -name "conda.sh" -path "*/profile.d/conda.sh" 2>/dev/null | head -n 1); [ -n "$CONDA_SH" ]; then
+    source "$CONDA_SH"
 else
-    echo "[FEHLER] Conda konnte auf diesem Image nicht gefunden werden!"
-    exit 1
+    # Letzter Rettungsversuch: Pfade direkt in den PATH klatschen
+    export PATH="/venv/main/bin:/venv/bin:$PATH"
 fi
-echo "Conda erfolgreich initialisiert!"
+
+echo "Conda erfolgreich geladen!"
 
 echo "========================================"
 echo "1. REPOSITORY KLONEN & ORDNER BAUEN"
@@ -65,7 +63,6 @@ pip install hf_transfer
 echo "========================================"
 echo "4. MODELLE DOWNLOADEN (Hugging Face CLI + HF Transfer)"
 echo "========================================"
-# Aktiviert den ultraschnellen Rust-Download-Modus
 export HF_HUB_ENABLE_HF_TRANSFER=1
 
 mkdir -p hf_temp
@@ -77,12 +74,12 @@ huggingface-cli download circlestone-labs/Anima \
   split_files/vae/qwen_image_vae.safetensors \
   --local-dir hf_temp --local-dir-use-symlinks False
 
-# Dateien flach in den model_weights Ordner verschieben
+# Dateien verschieben
 mv hf_temp/split_files/diffusion_models/anima-base-v1.0.safetensors model_weights/
 mv hf_temp/split_files/text_encoders/qwen_3_06b_base.safetensors model_weights/
 mv hf_temp/split_files/vae/qwen_image_vae.safetensors model_weights/
 
-# Temporären Ordner aufräumen
+# Aufräumen
 rm -rf hf_temp
 
 cd /workspace/diffusion-pipe/
