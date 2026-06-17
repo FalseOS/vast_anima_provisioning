@@ -58,5 +58,5 @@ eps = 1e-8
 [monitoring]
 enable_wandb = true
 wandb_api_key = 'ADD_HERE'
-wandb_tracker_name = 'tsuicaa_anima'
-wandb_run_name = 'tsuicaa_anima'
+wandb_tracker_name = 'xyz_anima'
+wandb_run_name = 'xyz_anima'
