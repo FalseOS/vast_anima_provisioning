@@ -15,7 +15,7 @@ trap 'script_error $LINENO' ERR
 echo "========================================"
 echo "0. CONDA ÜBER VENV/MAIN AKTIVIEREN"
 echo "========================================"
-# 1. Das offizielle Environment aktivieren (wie im Vast-Flux-Skript)
+# 1. Das offizielle Environment aktivieren
 source /venv/main/bin/activate
 
 # 2. Conda-Befehle für die non-interactive Shell verfügbar machen
@@ -24,14 +24,12 @@ if [ -f "/venv/etc/profile.d/conda.sh" ]; then
 elif CONDA_SH=$(find /venv -name "conda.sh" -path "*/profile.d/conda.sh" 2>/dev/null | head -n 1); [ -n "$CONDA_SH" ]; then
     source "$CONDA_SH"
 else
-    # Letzter Rettungsversuch: Pfade direkt in den PATH klatschen
     export PATH="/venv/main/bin:/venv/bin:$PATH"
 fi
-
 echo "Conda erfolgreich geladen!"
 
 echo "========================================"
-echo "1. REPOSITORY KLONEN & ORDNER BAUEN"
+echo "1. REPOSITORY KLONEN & CONFIGS LADEN"
 echo "========================================"
 cd /workspace/
 
@@ -44,6 +42,12 @@ cd diffusion-pipe
 mkdir -p project
 mkdir -p model_weights
 
+# HIER WERDEN DEINE CONFIGS AUS DEINEM REPO GEZOGEN
+echo "Lade deine Config-Dateien herunter..."
+wget -q -O project/anima_dataset.toml https://raw.githubusercontent.com/FalseOS/vast_anima_provisioning/refs/heads/main/anima_dataset.toml
+wget -q -O project/anima_train.toml https://raw.githubusercontent.com/FalseOS/vast_anima_provisioning/refs/heads/main/anima_train.toml
+echo "Configs erfolgreich in 'project/' abgelegt!"
+
 echo "========================================"
 echo "2. CONDA UMGEBUNG ERSTELLEN"
 echo "========================================"
@@ -53,7 +57,8 @@ conda activate diffusion-pipe
 echo "========================================"
 echo "3. CORE-ABHÄNGIGKEITEN INSTALLIEREN"
 echo "========================================"
-pip install torch torchvision torchaudio
+# torchaudio hier direkt fest integriert!
+pip install torch torchvision torchaudio 
 pip install -r requirements.txt
 pip install "transformers<5.0"
 pip install datasets requests pillow
@@ -91,4 +96,4 @@ echo "========================================"
 echo 'HINWEIS FÜR DAS TRAINING:'
 echo 'Führe diese Befehle im Terminal aus, wenn du verbunden bist:'
 echo 'conda activate diffusion-pipe'
-echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'
+echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" WANDB_MODE=offline python -m deepspeed.launcher.launch --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'
