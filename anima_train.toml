@@ -1,0 +1,62 @@
+# Output path for training runs. Each training run makes a new directory in here.
+output_dir = 'project/outputs'
+
+# Dataset config file (Verweist jetzt auf die Datei mit den strengen Cosmos/Anima-Auflösungen)
+dataset = 'project/anima_dataset.toml'
+
+# training settings
+epochs = 14
+micro_batch_size_per_gpu = 8
+pipeline_stages = 1
+gradient_accumulation_steps = 1
+gradient_clipping = 1.0
+
+# LERNRATE & SCHEDULER (Angepasst für dein neues RunPod-Patch-Skript)
+warmup_steps = 100
+lr_scheduler = 'linear'
+
+# eval settings
+eval_every_n_epochs = 1
+eval_before_first_step = true
+eval_micro_batch_size_per_gpu = 1
+eval_gradient_accumulation_steps = 1
+
+# misc settings
+save_every_n_epochs = 1
+checkpoint_every_n_minutes = 120
+activation_checkpointing = true
+partition_method = 'parameters'
+save_dtype = 'bfloat16'
+caching_batch_size = 1
+steps_per_print = 1
+video_clip_mode = 'single_beginning'
+
+# MODELL-KONFIGURATION (Komplett auf Anima umgestellt)
+[model]
+type = 'anima'
+transformer_path = 'model_weights/anima-base-v1.0.safetensors'
+vae_path = 'model_weights/qwen_image_vae.safetensors'
+llm_path = 'model_weights/qwen_3_06b_base.safetensors'
+dtype = 'bfloat16'
+# Comment out to train the llm_adapter, or adjust the learning rate to be >0.
+llm_adapter_lr = 0
+
+[adapter]
+type = 'lora'
+rank = 32
+dtype = 'bfloat16'
+
+[optimizer]
+type = 'adamw_optimi'
+# Haupt-Lernrate für das LoRA
+lr = 2e-5
+# das sorgt bei kleineren Datensätzen für viel mehr Stabilität.
+betas = [0.9, 0.99]
+weight_decay = 0.01
+eps = 1e-8
+
+[monitoring]
+enable_wandb = true
+wandb_api_key = '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'
+wandb_tracker_name = 'tsuicaa_anima'
+wandb_run_name = 'tsuicaa_anima'
