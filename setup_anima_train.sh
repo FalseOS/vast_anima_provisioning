@@ -1,23 +1,44 @@
 #!/bin/bash
 
-# Log file setup
-LOG_FILE="installation_log.txt"
-echo "Installation started at $(date)" > $LOG_FILE
+# Best Practice: Skript bricht bei Fehlern ab, statt kaputten Zustand zu hinterlassen
+set -euo pipefail
+
+# Fehler-Log-Funktion (hilft extrem beim Debuggen von Start-Problemen)
+script_error() {
+    local exit_code=$?
+    local line_number=$1
+    echo "[ERROR] Provisioning Script fehlgeschlagen in Zeile $line_number mit Exit-Code $exit_code" | tee -a /workspace/provisioning_error.log
+}
+trap 'script_error $LINENO' ERR
+
+echo "========================================"
+echo "0. CONDA FÜR DIESES SKRIPT INITIALISIEREN"
+echo "========================================"
+# Fügt Conda zum Pfad hinzu (Standard-Pfad bei Vast.ai / RunPod)
+export PATH="/opt/conda/bin:$PATH"
+# Lädt die Conda-Befehle (wie 'conda activate') in diese non-interactive Shell
+eval "$(conda shell.bash hook)"
 
 echo "========================================"
 echo "1. REPOSITORY KLONEN & ORDNER BAUEN"
 echo "========================================"
 cd /workspace/
-git clone --recurse-submodules https://github.com/tdrussell/diffusion-pipe
+
+# Nur klonen, wenn der Ordner nicht schon existiert
+if [ ! -d "diffusion-pipe" ]; then
+    git clone --recurse-submodules https://github.com/tdrussell/diffusion-pipe
+fi
+
 cd diffusion-pipe
-mkdir project
-mkdir model_weights
+mkdir -p project
+mkdir -p model_weights
 
 echo "========================================"
 echo "2. CONDA UMGEBUNG ERSTELLEN"
 echo "========================================"
 conda create -n diffusion-pipe python=3.12 -y
-source activate diffusion-pipe
+# Da wir den hook oben geladen haben, nutzen wir hier das moderne 'conda activate'
+conda activate diffusion-pipe
 
 echo "========================================"
 echo "3. CORE-ABHÄNGIGKEITEN INSTALLIEREN"
@@ -35,7 +56,6 @@ echo "========================================"
 # Aktiviert den ultraschnellen Rust-Download-Modus
 export HF_HUB_ENABLE_HF_TRANSFER=1
 
-# Temporärer Ordner, da die CLI standardmäßig die Ordnerstruktur des Repos spiegelt
 mkdir -p hf_temp
 
 echo "Starte parallelen High-Speed-Download..."
@@ -45,7 +65,7 @@ huggingface-cli download circlestone-labs/Anima \
   split_files/vae/qwen_image_vae.safetensors \
   --local-dir hf_temp --local-dir-use-symlinks False
 
-# Dateien flach in den model_weights Ordner verschieben (wie es vorher bei wget war)
+# Dateien flach in den model_weights Ordner verschieben
 mv hf_temp/split_files/diffusion_models/anima-base-v1.0.safetensors model_weights/
 mv hf_temp/split_files/text_encoders/qwen_3_06b_base.safetensors model_weights/
 mv hf_temp/split_files/vae/qwen_image_vae.safetensors model_weights/
@@ -59,5 +79,7 @@ echo "========================================"
 echo "SETUP ABGESCHLOSSEN! BEREIT FÜRS TRAINING."
 echo "========================================"
 
-# DEIN CHEAT-SHEET TRAININGSBEFEHL (Kopieren und manuell ausführen):
-# NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml --executable $(which python)
+echo 'HINWEIS FÜR DAS TRAINING:'
+echo 'Führe diese Befehle im Terminal aus, wenn du verbunden bist:'
+echo 'conda activate diffusion-pipe'
+echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml --executable $(which python)'
