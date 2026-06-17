@@ -53,7 +53,7 @@ conda activate diffusion-pipe
 echo "========================================"
 echo "3. CORE-ABHÄNGIGKEITEN INSTALLIEREN"
 echo "========================================"
-pip install torch torchvision
+pip install torch torchvision torchaudio
 pip install -r requirements.txt
 pip install "transformers<5.0"
 pip install datasets requests pillow
@@ -91,4 +91,4 @@ echo "========================================"
 echo 'HINWEIS FÜR DAS TRAINING:'
 echo 'Führe diese Befehle im Terminal aus, wenn du verbunden bist:'
 echo 'conda activate diffusion-pipe'
-echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml --executable $(which python)'
+echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'
