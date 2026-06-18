@@ -73,7 +73,7 @@ export HF_HUB_ENABLE_HF_TRANSFER=1
 mkdir -p hf_temp
 
 echo "Starte parallelen High-Speed-Download..."
-huggingface-cli download circlestone-labs/Anima \
+hf download circlestone-labs/Anima \
   split_files/diffusion_models/anima-base-v1.0.safetensors \
   split_files/text_encoders/qwen_3_06b_base.safetensors \
   split_files/vae/qwen_image_vae.safetensors \
