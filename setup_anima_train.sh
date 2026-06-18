@@ -96,6 +96,6 @@ echo "========================================"
 echo 'HINWEIS FÜR DAS TRAINING:'
 echo 'Führe diese Befehle im Terminal aus, wenn du verbunden bist:'
 echo 'conda activate diffusion-pipe'
-echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" WANDB_MODE=offline python -m deepspeed.launcher.launch --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'
+echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" WANDB_MODE="online" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'
 echo 'Oder wenn du kein API key hinzugefügt hast:'
-echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" WANDB_MODE="offline" python -m deepspeed.launcher.launch --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'
+echo 'NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" WANDB_MODE="offline" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'
