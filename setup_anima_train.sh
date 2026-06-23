@@ -51,42 +51,42 @@ conda create -n diffusion-pipe python=3.12 -y
 conda activate diffusion-pipe
 
 echo "========================================"
-echo "3. CORE-ABHÄNGIGKEITEN INSTALLIEREN (SMART GPU CHECK)"
+echo "3. CORE-ABHÄNGIGKEITEN & SMART PYTORCH INSTALL"
 echo "========================================"
-# Wir checken den Namen der ersten verbauten GPU
 GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -n 1)
 
 echo "Gefundene GPU: $GPU_NAME"
+echo "Installierter Treiber: $DRIVER_VER"
 
-# Wenn der Name "5090", "5080" oder "5070" enthält, brauchen wir CUDA 13.0
 if [[ "$GPU_NAME" == *"5090"* ]] || [[ "$GPU_NAME" == *"5080"* ]] || [[ "$GPU_NAME" == *"5070"* ]]; then
-    echo "🔥 Blackwell Architektur erkannt! Installiere PyTorch für CUDA 13.0..."
+    echo "🔥 Blackwell GPU erkannt. Installiere PyTorch für CUDA 13.0..."
     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
 else
-    echo "✅ Standard Architektur erkannt. Installiere ultra-kompatibles PyTorch für CUDA 12.4..."
+    echo "✅ Standard GPU erkannt. Installiere hochkompatibles PyTorch für CUDA 12.4..."
     pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 fi
 
+# Der restliche Core-Stuff
 pip install -r requirements.txt
 pip install "transformers<5.0"
 pip install datasets requests pillow
 pip install hf_transfer
 
 echo "========================================"
-echo "4. MODELLE DOWNLOADEN (Hugging Face CLI + HF Transfer)"
+echo "4. MODELLE DOWNLOADEN (HF Transfer)"
 echo "========================================"
 export HF_HUB_ENABLE_HF_TRANSFER=1
 mkdir -p hf_temp
 
 echo "Starte parallelen High-Speed-Download..."
-# Modernisiert auf den neuen 'hf'-Standard und ohne das veraltete Symlink-Flag
 hf download circlestone-labs/Anima \
   split_files/diffusion_models/anima-base-v1.0.safetensors \
   split_files/text_encoders/qwen_3_06b_base.safetensors \
   split_files/vae/qwen_image_vae.safetensors \
   --local-dir hf_temp
 
-# Dateien verschieben
+# Dateien in die richtigen Ordner flachen
 mv hf_temp/split_files/diffusion_models/anima-base-v1.0.safetensors model_weights/
 mv hf_temp/split_files/text_encoders/qwen_3_06b_base.safetensors model_weights/
 mv hf_temp/split_files/vae/qwen_image_vae.safetensors model_weights/
@@ -95,47 +95,14 @@ rm -rf hf_temp
 cd /workspace/diffusion-pipe/
 
 echo "========================================"
-echo "5. CUSTOM BEFEHLE (FUNCTIONS) ERSTELLEN"
+echo "5. SIMPLES ALIAS-SETUP FÜR DEN START"
 echo "========================================"
-cat << 'EOF' >> ~/.bashrc
+# Einfache Aliases ohne dynamische Parameter, die exakt das machen, was sie sollen.
 
-# --- OFFLINE TRAINING FUNCTION ---
-train-anima-offline() {
-    local target_epochs=${1:-10}
-    local target_repeats=${2:-1}
+echo "alias train-anima-offline='cd /workspace/diffusion-pipe && conda activate diffusion-pipe && NCCL_P2P_DISABLE=\"1\" NCCL_IB_DISABLE=\"1\" WANDB_MODE=\"offline\" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'" >> ~/.bashrc
 
-    echo "Passe Configs an: Epochs=$target_epochs, Repeats=$target_repeats..."
-    cd /workspace/diffusion-pipe
-    conda activate diffusion-pipe
-
-    sed -i -E "s/(epochs\s*=\s*)[0-9]+/\1$target_epochs/g" project/anima_train.toml
-    sed -i -E "s/(num_train_epochs\s*=\s*)[0-9]+/\1$target_epochs/g" project/anima_train.toml
-    sed -i -E "s/(repeats\s*=\s*)[0-9]+/\1$target_repeats/g" project/anima_dataset.toml
-
-    echo "Starte DeepSpeed (Offline)..."
-    NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" WANDB_MODE="offline" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml
-}
-
-# --- ONLINE TRAINING FUNCTION ---
-train-anima-online() {
-    local target_epochs=${1:-10}
-    local target_repeats=${2:-1}
-
-    echo "Passe Configs an: Epochs=$target_epochs, Repeats=$target_repeats..."
-    cd /workspace/diffusion-pipe
-    conda activate diffusion-pipe
-
-    sed -i -E "s/(epochs\s*=\s*)[0-9]+/\1$target_epochs/g" project/anima_train.toml
-    sed -i -E "s/(num_train_epochs\s*=\s*)[0-9]+/\1$target_epochs/g" project/anima_train.toml
-    sed -i -E "s/(repeats\s*=\s*)[0-9]+/\1$target_repeats/g" project/anima_dataset.toml
-
-    echo "Starte DeepSpeed (Online via Wandb)..."
-    NCCL_P2P_DISABLE="1" NCCL_IB_DISABLE="1" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml
-}
-EOF
-
-echo "Custom Befehle wurden erfolgreich angelegt!"
+echo "alias train-anima-online='cd /workspace/diffusion-pipe && conda activate diffusion-pipe && NCCL_P2P_DISABLE=\"1\" NCCL_IB_DISABLE=\"1\" deepspeed --num_gpus=1 train.py --deepspeed --config project/anima_train.toml'" >> ~/.bashrc
 
 echo "========================================"
-echo "SETUP ABGESCHLOSSEN! BEREIT FÜRS TRAINING."
+echo "SETUP ABSOLUT KUGELSICHER ABGESCHLOSSEN!"
 echo "========================================"
