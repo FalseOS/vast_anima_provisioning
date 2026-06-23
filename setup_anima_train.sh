@@ -51,10 +51,21 @@ conda create -n diffusion-pipe python=3.12 -y
 conda activate diffusion-pipe
 
 echo "========================================"
-echo "3. CORE-ABHÄNGIGKEITEN INSTALLIEREN"
+echo "3. CORE-ABHÄNGIGKEITEN INSTALLIEREN (SMART GPU CHECK)"
 echo "========================================"
-# HIER IST DER FIX: Wir erzwingen eine ultra-kompatible CUDA-Version (z.B. cu124)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+# Wir checken den Namen der ersten verbauten GPU
+GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
+
+echo "Gefundene GPU: $GPU_NAME"
+
+# Wenn der Name "5090", "5080" oder "5070" enthält, brauchen wir CUDA 13.0
+if [[ "$GPU_NAME" == *"5090"* ]] || [[ "$GPU_NAME" == *"5080"* ]] || [[ "$GPU_NAME" == *"5070"* ]]; then
+    echo "🔥 Blackwell Architektur erkannt! Installiere PyTorch für CUDA 13.0..."
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+else
+    echo "✅ Standard Architektur erkannt. Installiere ultra-kompatibles PyTorch für CUDA 12.4..."
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+fi
 
 pip install -r requirements.txt
 pip install "transformers<5.0"
