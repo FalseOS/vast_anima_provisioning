@@ -53,7 +53,9 @@ conda activate diffusion-pipe
 echo "========================================"
 echo "3. CORE-ABHÄNGIGKEITEN INSTALLIEREN"
 echo "========================================"
-pip install torch torchvision torchaudio
+# HIER IST DER FIX: Wir erzwingen eine ultra-kompatible CUDA-Version (z.B. cu124)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+
 pip install -r requirements.txt
 pip install "transformers<5.0"
 pip install datasets requests pillow
