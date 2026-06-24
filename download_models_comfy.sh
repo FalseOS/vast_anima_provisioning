@@ -6,18 +6,17 @@
 
 # Checkpoints (z.B. SDXL, Pony, Flux, SD 1.5)
 CHECKPOINTS=(
-    "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/sd_xl_base_1.0.safetensors"
+    "https://huggingface.co/Comfy-Org/Krea-2/blob/main/diffusion_models/krea2_raw_bf16.safetensors"
 )
 
 # VAEs
 VAES=(
-    "https://huggingface.co/stabilityai/sdxl-vae/blob/main/sdxl_vae.safetensors"
+    "https://huggingface.co/Comfy-Org/Krea-2/blob/main/vae/qwen_image_vae.safetensors"
 )
 
 # Text Encoders / CLIPs (z.B. für Flux oder SD3)
 TEXT_ENCODERS=(
-    "https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/t5xxl_fp16.safetensors"
-    "https://huggingface.co/comfyanonymous/flux_text_encoders/blob/main/clip_l.safetensors"
+    "https://huggingface.co/Comfy-Org/Krea-2/blob/main/text_encoders/qwen3vl_4b_bf16.safetensors"
 )
 
 # Loras (Optional)
