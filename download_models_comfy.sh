@@ -30,59 +30,36 @@ CONTROLNETS=(
 )
 
 # ==============================================================================
-# PARSING & DOWNLOAD LOGIC
+# DOWNLOAD LOGIC VIA NEW 'hf' CLI
 # ==============================================================================
 
-# Basis-Pfad zu ComfyUI (Vast.ai Standard)
 BASE_DIR="/workspace/ComfyUI/models"
 
-# Sicherstellen, dass das aktuellste huggingface_hub Paket installiert ist
-ensure_hf_cli() {
-    if ! command -v huggingface-cli &> /dev/null; then
-        echo "🔄 Installiere/Aktualisiere huggingface_hub für High-Speed Downloads..."
-        pip install -q -U "huggingface_hub[cli]"
-    fi
-}
-
-# Funktion, die HuggingFace-URLs zerlegt und modern herunterlädt
 download_hf_file() {
     local url=$1
     local target_dir=$2
 
-    # Prüfen auf valide HuggingFace-URL
-    if [[ $url =~ huggingface\.co/([^/]+/[^/]+)/blob/([^/]+)/(.*) ]]; then
+    # Parsing der neuen oder alten HF-URL Struktur (blob oder resolve)
+    if [[ $url =~ huggingface\.co/([^/]+/[^/]+)/(blob|resolve)/([^/]+)/(.*) ]]; then
         local repo="${BASH_REMATCH[1]}"
-        local revision="${BASH_REMATCH[2]}"
-        local file_path="${BASH_REMATCH[3]}"
+        local revision="${BASH_REMATCH[3]}"
+        local file_path="${BASH_REMATCH[4]}"
         local filename=$(basename "$file_path")
 
-        echo "🚀 Downloade: $filename via modern HF-CLI..."
+        echo "🚀 [HF] Downloade via native hf cli: $filename"
         
-        # Erstelle das Zielverzeichnis, falls es noch nicht existiert
+        # Sicherstellen, dass der Zielordner existiert
         mkdir -p "$target_dir"
 
-        # Der neue, saubere Befehl: Schreibt die Datei direkt als echte Datei 
-        # in den Zielordner, behält die flache Struktur und nutzt maximale Bandbreite.
-        huggingface-cli download "$repo" "$file_path" \
-            --revision "$revision" \
-            --local-dir "$target_dir" \
-            --local-dir-use-symlinks False
-
-        # Falls das Tool Unterordner miterstellt hat, ziehen wir die Datei eine Ebene höher
-        if [ -f "$target_dir/$file_path" ]; then
-            mv "$target_dir/$file_path" "$target_dir/$filename"
-            # Alten, leeren Strukturbaum entfernen
-            rm -rf "$target_dir/$(echo "$file_path" | cut -d'/' -f1)"
-        fi
+        # Der neue 2026 Befehl: lädt rasend schnell und speichert es direkt an Ort und Stelle
+        hf download "$repo" "$file_path" --revision "$revision" --to "$target_dir/$filename"
+        
     else
-        echo "⚠️ Ungültige HF-URL oder kein direkter Blob-Link: $url"
+        echo "⚠️ Ungültige HF-URL: $url"
     fi
 }
 
-# Hauptprozess
 main() {
-    ensure_hf_cli
-
     # 1. Checkpoints
     for url in "${CHECKPOINTS[@]}"; do
         download_hf_file "$url" "$BASE_DIR/checkpoints"
@@ -108,7 +85,7 @@ main() {
         download_hf_file "$url" "$BASE_DIR/controlnet"
     done
 
-    echo "✅ Alle Downloads ohne Symlinks erfolgreich abgeschlossen!"
+    echo "✅ Alle Downloads mit der neuen HF-CLI erfolgreich abgeschlossen!"
 }
 
 main
