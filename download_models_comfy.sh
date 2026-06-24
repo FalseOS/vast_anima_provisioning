@@ -4,7 +4,7 @@
 # CONFIGURATION: Füge hier deine HuggingFace-Modell-URLs ein
 # ==============================================================================
 
-# Checkpoints (z.B. SDXL, Pony, Flux, SD 1.5)
+# Checkpoints
 CHECKPOINTS=(
     "https://huggingface.co/Comfy-Org/Krea-2/blob/main/diffusion_models/krea2_raw_bf16.safetensors"
 )
@@ -14,23 +14,19 @@ VAES=(
     "https://huggingface.co/Comfy-Org/Krea-2/blob/main/vae/qwen_image_vae.safetensors"
 )
 
-# Text Encoders / CLIPs (z.B. für Flux oder SD3)
+# Text Encoders
 TEXT_ENCODERS=(
     "https://huggingface.co/Comfy-Org/Krea-2/blob/main/text_encoders/qwen3vl_4b_bf16.safetensors"
 )
 
-# Loras (Optional)
-LORAS=(
-    # "https://huggingface.co/user/repo/blob/main/lora.safetensors"
-)
+# Loras
+LORAS=()
 
-# ControlNet (Optional)
-CONTROLNETS=(
-    # "https://huggingface.co/user/repo/blob/main/controlnet.safetensors"
-)
+# ControlNets
+CONTROLNETS=()
 
 # ==============================================================================
-# DOWNLOAD LOGIC VIA NEW 'hf' CLI
+# DOWNLOAD LOGIC
 # ==============================================================================
 
 BASE_DIR="/workspace/ComfyUI/models"
@@ -39,21 +35,25 @@ download_hf_file() {
     local url=$1
     local target_dir=$2
 
-    # Parsing der neuen oder alten HF-URL Struktur (blob oder resolve)
+    # Extrahiert Repo, Revision und Dateipfad aus der URL
     if [[ $url =~ huggingface\.co/([^/]+/[^/]+)/(blob|resolve)/([^/]+)/(.*) ]]; then
         local repo="${BASH_REMATCH[1]}"
         local revision="${BASH_REMATCH[3]}"
         local file_path="${BASH_REMATCH[4]}"
         local filename=$(basename "$file_path")
 
-        echo "🚀 [HF] Downloade via native hf cli: $filename"
-        
-        # Sicherstellen, dass der Zielordner existiert
+        echo "🚀 [HF] Downloade via hf download: $filename"
         mkdir -p "$target_dir"
 
-        # Der neue 2026 Befehl: lädt rasend schnell und speichert es direkt an Ort und Stelle
-        hf download "$repo" "$file_path" --revision "$revision" --to "$target_dir/$filename"
+        # Nutzung der korrekten Optionen laut Log: --local-dir und --revision
+        hf download "$repo" "$file_path" --revision "$revision" --local-dir "$target_dir"
         
+        # Falls hf download den Pfadbaum (z.B. main/subfolder/file) erstellt, 
+        # holen wir die Datei direkt in den Zielordner und löschen den leeren Rest.
+        if [ -f "$target_dir/$file_path" ]; then
+            mv "$target_dir/$file_path" "$target_dir/$filename"
+            rm -rf "$target_dir/$(echo "$file_path" | cut -d'/' -f1)"
+        fi
     else
         echo "⚠️ Ungültige HF-URL: $url"
     fi
@@ -85,7 +85,7 @@ main() {
         download_hf_file "$url" "$BASE_DIR/controlnet"
     done
 
-    echo "✅ Alle Downloads mit der neuen HF-CLI erfolgreich abgeschlossen!"
+    echo "✅ Alle Downloads erfolgreich abgeschlossen!"
 }
 
 main
