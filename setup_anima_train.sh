@@ -53,6 +53,14 @@ conda activate diffusion-pipe
 echo "========================================"
 echo "3. CORE-ABHÄNGIGKEITEN & SMART PYTORCH INSTALL"
 echo "========================================"
+# Zuerst die requirements.txt installieren (installiert evtl. falsches Standard-Torch)
+pip install -r requirements.txt
+pip install "transformers<5.0"
+pip install datasets requests pillow
+pip install hf_transfer
+
+# JETZT ERST überschreiben wir Torch gezielt mit der richtigen CUDA-Version.
+# Dadurch hat pip keine Chance mehr, es heimlich zu überschreiben!
 GPU_NAME=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)
 DRIVER_VER=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -n 1)
 
@@ -60,11 +68,17 @@ echo "Gefundene GPU: $GPU_NAME"
 echo "Installierter Treiber: $DRIVER_VER"
 
 if [[ "$GPU_NAME" == *"5090"* ]] || [[ "$GPU_NAME" == *"5080"* ]] || [[ "$GPU_NAME" == *"5070"* ]]; then
-    echo "🔥 Blackwell GPU erkannt. Installiere PyTorch für CUDA 13.0..."
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+    # Falls der Host der 5090 den alten 12.8er Treiber hat, nutzen wir cu126 (Blackwell-Support + kompatibel mit CUDA 12.8)
+    if (( $(echo "$DRIVER_VER < 570" | bc -l) )); then
+        echo "🔥 Blackwell GPU mit älterem Treiber erkannt. Installiere PyTorch für CUDA 12.6..."
+        pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+    else
+        echo "🔥 Blackwell GPU mit neuem Treiber erkannt. Installiere PyTorch für CUDA 13.0..."
+        pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+    fi
 else
     echo "✅ Standard GPU erkannt. Installiere hochkompatibles PyTorch für CUDA 12.4..."
-    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+    pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 fi
 
 # Der restliche Core-Stuff
