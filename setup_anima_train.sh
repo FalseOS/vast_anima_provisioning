@@ -36,6 +36,12 @@ if [ ! -d "diffusion-pipe" ]; then
 fi
 
 cd diffusion-pipe
+
+# --- NEU: HOTFIX FÜR NEUERE PYTORCH VERSIONEN ---
+echo "Patche diffusion-pipe für neueste PyTorch-Kompatibilität..."
+sed -i 's/from torch._namedtensor_internals import check_serializing_named_tensor/check_serializing_named_tensor = lambda *args, **kwargs: None/g' utils/reduction.py
+# ------------------------------------------------
+
 mkdir -p project
 mkdir -p model_weights
 
