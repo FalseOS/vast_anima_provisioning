@@ -74,17 +74,18 @@ echo "Gefundene GPU: $GPU_NAME"
 echo "Installierter Treiber: $DRIVER_VER"
 
 if [[ "$GPU_NAME" == *"5090"* ]] || [[ "$GPU_NAME" == *"5080"* ]] || [[ "$GPU_NAME" == *"5070"* ]]; then
-    # Falls der Host der 5090 den alten 12.8er Treiber hat, nutzen wir cu126 (Blackwell-Support + kompatibel mit CUDA 12.8)
     if (( $(echo "$DRIVER_VER < 570" | bc -l) )); then
-        echo "🔥 Blackwell GPU mit älterem Treiber erkannt. Installiere PyTorch für CUDA 12.6..."
-        pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+        echo "🔥 Blackwell GPU mit älterem Treiber..."
+        pip install --force-reinstall torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu126
     else
-        echo "🔥 Blackwell GPU mit neuem Treiber erkannt. Installiere PyTorch für CUDA 13.0..."
-        pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+        echo "🔥 Blackwell GPU mit neuem Treiber..."
+        # HINWEIS: Ältere PyTorch Versionen (wie 2.5.1) haben evtl. noch keine offiziellen cu130 Wheels. 
+        # Weiche im Notfall hier auf cu124/cu126 aus.
+        pip install --force-reinstall torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
     fi
 else
-    echo "✅ Standard GPU erkannt. Installiere hochkompatibles PyTorch für CUDA 12.4..."
-    pip install --force-reinstall torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+    echo "✅ Standard GPU erkannt..."
+    pip install --force-reinstall torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu124
 fi
 
 # Der restliche Core-Stuff
