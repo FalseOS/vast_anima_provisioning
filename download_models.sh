@@ -26,28 +26,38 @@ https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_3
 # LoRa
 https://huggingface.co/lightx2v/Minimax-h3-Turbo/resolve/main/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors -> loras
 
-# Ganze Repositories funktionieren auch (lädt alle Dateien im Repo herunter):
-# https://huggingface.co/lcm-models/lcm-sdxl -> unet
-
 EOM
 
 # ==========================================
 # 2. SCRIPT LOGIK (Ab hier nichts ändern)
 # ==========================================
-echo "Starte automatischen Model-Download..."
+echo "Starte automatischen Model-Download mit 'hf'..."
 
 # Gehe jede Zeile der Liste durch
-echo "$MODELS_LIST" | while IFS="->" read -r url target; do
-    # Leerzeichen an den Rändern entfernen
-    url=$(echo "$url" | xargs)
-    target=$(echo "$target" | xargs)
+echo "$MODELS_LIST" | while read -r line; do
+    # Leerzeichen trimmen
+    line=$(echo "$line" | xargs)
 
-    # Leere Zeilen oder Kommentare (die mit # beginnen) überspringen
-    if [[ -z "$url" || "$url" == \#* ]]; then
+    # Leere Zeilen oder Kommentare überspringen
+    if [[ -z "$line" || "$line" == \#* ]]; then
+        continue
+    fi
+
+    # Überspringe Zeilen, die kein '->' enthalten (Sicherheitscheck)
+    if [[ "$line" != *"->"* ]]; then
         continue
     fi
 
     echo "----------------------------------------"
+
+    # URL und Target absolut sicher trennen (splittet exakt beim Pfeil)
+    url="${line%%->*}"
+    target="${line##*->}"
+
+    # Nochmal trimmen, um Leerzeichen neben dem Pfeil zu entfernen
+    url=$(echo "$url" | xargs)
+    target=$(echo "$target" | xargs)
+    
     echo "Verarbeite: $url"
 
     # URL zerlegen, um Repo-ID und Dateiname für HF CLI zu bekommen
@@ -62,13 +72,13 @@ echo "$MODELS_LIST" | while IFS="->" read -r url target; do
     target_dir="$COMFYUI_DIR/models/$target"
     mkdir -p "$target_dir"
 
-    # Herunterladen mit huggingface-cli
+    # Herunterladen mit dem neuen hf-CLI (ohne veraltete Parameter)
     if [ -z "$filename" ]; then
-        echo "Lade komplettes Repository '$repo_id' nach '$target'..."
-        hf download "$repo_id" --local-dir "$target_dir" --local-dir-use-symlinks False
+        echo "Lade komplettes Repository '$repo_id' nach '$target_dir'..."
+        hf download "$repo_id" --local-dir "$target_dir"
     else
-        echo "Lade Datei '$filename' nach '$target'..."
-        hf download "$repo_id" "$filename" --local-dir "$target_dir" --local-dir-use-symlinks False
+        echo "Lade Datei '$filename' nach '$target_dir'..."
+        hf download "$repo_id" "$filename" --local-dir "$target_dir"
     fi
 done
 
