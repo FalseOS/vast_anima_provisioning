@@ -13,14 +13,18 @@ COMFYUI_DIR="/workspace/ComfyUI"
 read -r -d '' MODELS_LIST << EOM
 
 # Checkpoints / Base Models
-https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/resolve/main/sd_xl_base_1.0.safetensors -> DiffusionModels
-https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/flux1-schnell.safetensors -> DiffusionModels
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_fl2va_int8_convrot.safetensors -> diffusion_models
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/diffusion_models/minimax_h3_ref2va_int8_convrot.safetensors -> diffusion_models
 
 # VAEs
-https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors -> VAE
+https://huggingface.co/Kijai/MiniMax-H3-experimental/resolve/main/minimax_h3_video_vae_int8_convrot.safetensors -> vae
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/vae/minimax_h3_audio_vae_fp32.safetensors -> vae
 
 # Text Encoder (CLIP)
-https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors -> TextEncoders
+https://huggingface.co/Comfy-Org/MiniMax-H3/resolve/main/text_encoders/qwen3vl_32b_minimax_h3_int8_convrot.safetensors -> text_encoders
+
+# LoRa
+https://huggingface.co/lightx2v/Minimax-h3-Turbo/resolve/main/minimax_h3_fl2v_turbo_4step_v1.0_768p_comfyui_bf16.safetensors -> loras
 
 # Ganze Repositories funktionieren auch (lädt alle Dateien im Repo herunter):
 # https://huggingface.co/lcm-models/lcm-sdxl -> unet
