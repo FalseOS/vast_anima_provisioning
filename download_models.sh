@@ -61,10 +61,10 @@ echo "$MODELS_LIST" | while IFS="->" read -r url target; do
     # Herunterladen mit huggingface-cli
     if [ -z "$filename" ]; then
         echo "Lade komplettes Repository '$repo_id' nach '$target'..."
-        huggingface-cli download "$repo_id" --local-dir "$target_dir" --local-dir-use-symlinks False
+        hf download "$repo_id" --local-dir "$target_dir" --local-dir-use-symlinks False
     else
         echo "Lade Datei '$filename' nach '$target'..."
-        huggingface-cli download "$repo_id" "$filename" --local-dir "$target_dir" --local-dir-use-symlinks False
+        hf download "$repo_id" "$filename" --local-dir "$target_dir" --local-dir-use-symlinks False
     fi
 done
 
